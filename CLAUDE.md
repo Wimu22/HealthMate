@@ -38,11 +38,16 @@ Run from the repo root (use `./gradlew` in Git Bash, `.\gradlew.bat` in PowerShe
 
 ## Current state of the build
 
-The project is a fresh Android Studio template: AGP 9.5 (built-in Kotlin support, no separate
-`kotlin-android` plugin), compileSdk/targetSdk 37, minSdk 28, Java 11, version catalog in
-`gradle/libs.versions.toml`. Compose, Room, Navigation Compose, Coil, lifecycle/ViewModel and KSP
-are **not yet added** — add them through the version catalog when the corresponding feature is built.
-There is no `MainActivity` yet.
+AGP 9.5 (built-in Kotlin support, no separate `kotlin-android` plugin), compileSdk/targetSdk 37,
+minSdk 28, Java 11. All dependencies go through the version catalog `gradle/libs.versions.toml`.
+Room + KSP, Compose (BOM) + Material 3 + icons-extended, and Coil are set up; Navigation Compose
+and lifecycle/ViewModel are not yet added. There is no `MainActivity` yet.
+
+**Kotlin version constraint:** AGP 9.5.1 bundles Kotlin 2.2.10, so the compiler can only read
+libraries built with Kotlin ≤ 2.3. A library whose pom depends on `kotlin-stdlib` 2.4+ (e.g. Coil
+3.5+) fails with "Module was compiled with an incompatible version of Kotlin". Check a new
+library's stdlib version before adding it. The Compose compiler plugin version (`kotlin` in the
+catalog) must equal the bundled Kotlin version.
 
 ## Architecture (target, per spec)
 

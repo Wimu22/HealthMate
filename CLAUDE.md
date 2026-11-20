@@ -40,8 +40,9 @@ Run from the repo root (use `./gradlew` in Git Bash, `.\gradlew.bat` in PowerShe
 
 AGP 9.5 (built-in Kotlin support, no separate `kotlin-android` plugin), compileSdk/targetSdk 37,
 minSdk 28, Java 11. All dependencies go through the version catalog `gradle/libs.versions.toml`.
-Room + KSP, Compose (BOM) + Material 3 + icons-extended, and Coil are set up; Navigation Compose
-and lifecycle/ViewModel are not yet added. There is no `MainActivity` yet.
+Room + KSP, Compose (BOM) + Material 3 + icons-extended, Coil, Navigation Compose and
+lifecycle-viewmodel-compose / lifecycle-runtime-compose are set up. `MainActivity` (edge-to-edge,
+`HealthMateTheme`) is the launcher activity and currently shows a placeholder screen.
 
 **Kotlin version constraint:** AGP 9.5.1 bundles Kotlin 2.2.10, so the compiler can only read
 libraries built with Kotlin ≤ 2.3. A library whose pom depends on `kotlin-stdlib` 2.4+ (e.g. Coil

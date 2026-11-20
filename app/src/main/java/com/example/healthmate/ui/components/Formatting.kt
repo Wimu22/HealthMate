@@ -12,6 +12,11 @@ private val DisplayDateFormatter = DateTimeFormatter.ofPattern("EEE, d MMM yyyy"
 /** 2026-11-19 → "Thu, 19 Nov 2026". */
 fun LocalDate.toDisplayDate(): String = format(DisplayDateFormatter)
 
+private val LongDateFormatter = DateTimeFormatter.ofPattern("d MMMM yyyy")
+
+/** 2026-11-19 → "19 November 2026" (Dashboard date line). */
+fun LocalDate.toLongDisplayDate(): String = format(LongDateFormatter)
+
 /** Database date text "2026-11-19" → "Thu, 19 Nov 2026". Falls back to the raw text if invalid. */
 fun formatRecordDate(isoDate: String): String = try {
     LocalDate.parse(isoDate).toDisplayDate()

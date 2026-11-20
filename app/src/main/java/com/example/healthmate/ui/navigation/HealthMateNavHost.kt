@@ -9,7 +9,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.healthmate.domain.SortOrder
-import java.time.LocalDate
+import com.example.healthmate.ui.dashboard.DashboardScreen
 
 /**
  * The navigation graph (spec section 6):
@@ -43,28 +43,13 @@ fun HealthMateNavHost(
         modifier = modifier
     ) {
         composable(Screen.Dashboard.route) {
-            // Placeholder until DashboardScreen is built. The search button stands in for the
-            // Filter bottom sheet: it searches the last 7 days, sorted by highest steps.
-            PlaceholderScreen(
-                title = "HealthMate",
-                details = "Dashboard",
-                actions = listOf(
-                    PlaceholderAction("Add New Record", addRecord),
-                    PlaceholderAction("All Records") { navController.navigate(Screen.AllRecords.route) },
-                    PlaceholderAction("Open a recent record (id $SAMPLE_RECORD_ID)") {
-                        openRecord(SAMPLE_RECORD_ID)
-                    },
-                    PlaceholderAction("Search last 7 days") {
-                        val today = LocalDate.now()
-                        navController.navigate(
-                            Screen.SearchResults.createRoute(
-                                startDate = today.minusDays(7).toString(),
-                                endDate = today.toString(),
-                                sortOrder = SortOrder.HIGHEST_STEPS
-                            )
-                        )
-                    }
-                )
+            DashboardScreen(
+                onAddRecord = addRecord,
+                onAllRecords = { navController.navigate(Screen.AllRecords.route) },
+                onOpenRecord = openRecord,
+                onSearch = { startDate, endDate, sortOrder ->
+                    navController.navigate(Screen.SearchResults.createRoute(startDate, endDate, sortOrder))
+                }
             )
         }
 

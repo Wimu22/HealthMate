@@ -58,6 +58,9 @@ catalog) must equal the bundled Kotlin version.
   `data/local`, `data/repository`, `domain`, `ui/{theme,components,navigation,dashboard,records,addedit,detail,search}`.
 - Strict layering: Screen → ViewModel → Repository → DAO. Screens never touch the DAO.
 - Each ViewModel exposes one immutable `StateFlow<UiState>` plus event functions (one-way data flow).
+- No DI library: each ViewModel has a `companion object { val Factory }` (`viewModelFactory { initializer { … } }`)
+  that builds its repository from `HealthMateDatabase.getInstance(app)`. Inject "today" as a
+  `() -> LocalDate` parameter so date logic is testable (see `DashboardViewModel`).
 - DAO returns `Flow`, so all screens refresh automatically when the database changes.
 - Room table `health_records`: `date` stored as `yyyy-MM-dd` TEXT and unique (one record per day);
   optional `photo_path` points to a selfie copied into app-private storage (picked via Android Photo

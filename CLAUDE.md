@@ -42,7 +42,9 @@ AGP 9.5 (built-in Kotlin support, no separate `kotlin-android` plugin), compileS
 minSdk 28, Java 11. All dependencies go through the version catalog `gradle/libs.versions.toml`.
 Room + KSP, Compose (BOM) + Material 3 + icons-extended, Coil, Navigation Compose and
 lifecycle-viewmodel-compose / lifecycle-runtime-compose are set up. `MainActivity` (edge-to-edge,
-`HealthMateTheme`) is the launcher activity and currently shows a placeholder screen.
+`HealthMateTheme`) is the launcher activity and hosts `ui/navigation/HealthMateNavHost`.
+Routes are string-based, defined in the sealed `Screen` class (`ui/navigation/Screen.kt`); screens get
+navigation lambdas, never the NavController. Screens not built yet use `PlaceholderScreen`.
 
 **Kotlin version constraint:** AGP 9.5.1 bundles Kotlin 2.2.10, so the compiler can only read
 libraries built with Kotlin ≤ 2.3. A library whose pom depends on `kotlin-stdlib` 2.4+ (e.g. Coil

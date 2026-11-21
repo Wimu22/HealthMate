@@ -21,6 +21,7 @@ import androidx.navigation.navArgument
 import com.example.healthmate.domain.SortOrder
 import com.example.healthmate.ui.addedit.AddEditRecordScreen
 import com.example.healthmate.ui.dashboard.DashboardScreen
+import com.example.healthmate.ui.detail.RecordDetailScreen
 import kotlinx.coroutines.launch
 
 /**
@@ -58,10 +59,10 @@ fun HealthMateNavHost(
     val showMessage: (String) -> Unit = { message -> scope.launch { snackbarHostState.showSnackbar(message) } }
 
     /**
-     * Add and Edit both use these. After Save/Update: go back and show the message. Only if
+     * After Save, Update or Delete: go back and show the message ("Record saved", …). Only if
      * [entry] is still the top screen, so a repeated call can't pop the screen underneath too.
      */
-    fun onRecordSaved(entry: NavBackStackEntry): (String) -> Unit = { message ->
+    fun goBackWithMessage(entry: NavBackStackEntry): (String) -> Unit = { message ->
         if (navController.currentBackStackEntry == entry) {
             navController.popBackStack()
             showMessage(message)
@@ -106,7 +107,7 @@ fun HealthMateNavHost(
             composable(Screen.AddRecord.route) { entry ->
                 AddEditRecordScreen(
                     onBack = goBack,
-                    onSaved = onRecordSaved(entry),
+                    onSaved = goBackWithMessage(entry),
                     onEditExisting = replaceWithEdit
                 )
             }
@@ -118,7 +119,7 @@ fun HealthMateNavHost(
                 // Same screen as Add; the ViewModel reads the record id from this route and pre-fills it.
                 AddEditRecordScreen(
                     onBack = goBack,
-                    onSaved = onRecordSaved(entry),
+                    onSaved = goBackWithMessage(entry),
                     onEditExisting = replaceWithEdit
                 )
             }
@@ -127,17 +128,12 @@ fun HealthMateNavHost(
                 route = Screen.RecordView.route,
                 arguments = listOf(navArgument(Screen.ARG_RECORD_ID) { type = NavType.LongType })
             ) { entry ->
-                val recordId = entry.arguments?.getLong(Screen.ARG_RECORD_ID) ?: 0L
-                PlaceholderScreen(
-                    title = "Record View",
-                    details = "Record id: $recordId",
+                RecordDetailScreen(
                     onBack = goBack,
-                    actions = listOf(
-                        PlaceholderAction("Add New", addRecord),
-                        PlaceholderAction("Edit") { editRecord(recordId) },
-                        // After Delete, return to the list we came from.
-                        PlaceholderAction("Delete", goBack)
-                    )
+                    onAddNew = addRecord,
+                    onEdit = editRecord,
+                    // After Delete, return to the list we came from (Dashboard, All Records, Search).
+                    onDeleted = goBackWithMessage(entry)
                 )
             }
 

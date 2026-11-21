@@ -47,6 +47,8 @@ data class AddEditUiState(
     val duplicateRecordId: Long? = null,
     /** True while an existing record is being loaded for editing. */
     val isLoading: Boolean = false,
+    /** Edit mode only: the record could not be loaded (deleted or database error), so there is no form. */
+    val loadError: String? = null,
     val isSaving: Boolean = false,
     /** A friendly message for a database problem (load or save failed, record missing). */
     val errorMessage: String? = null,
@@ -56,7 +58,8 @@ data class AddEditUiState(
     val isEditMode: Boolean get() = recordId != null
     val title: String get() = if (isEditMode) "Edit Record" else "Add New Record"
     val saveButtonLabel: String get() = if (isEditMode) "Update Record" else "Save Record"
-    val canSave: Boolean get() = !isLoading && !isSaving && !isProcessingPhoto && savedMessage == null
+    val canSave: Boolean
+        get() = !isLoading && loadError == null && !isSaving && !isProcessingPhoto && savedMessage == null
 }
 
 /**
@@ -245,7 +248,7 @@ class AddEditRecordViewModel(
                 val record = repository.getRecord(id)
                 _uiState.update {
                     if (record == null) {
-                        it.copy(isLoading = false, errorMessage = "This record no longer exists.")
+                        it.copy(isLoading = false, loadError = "This record no longer exists.")
                     } else {
                         it.copy(
                             isLoading = false,
@@ -261,7 +264,7 @@ class AddEditRecordViewModel(
                 throw e
             } catch (e: Exception) {
                 _uiState.update {
-                    it.copy(isLoading = false, errorMessage = "Could not load the record. Please try again.")
+                    it.copy(isLoading = false, loadError = "Could not load the record. Please try again.")
                 }
             }
         }

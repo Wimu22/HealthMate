@@ -11,6 +11,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -56,6 +57,24 @@ fun HealthMateNavHost(
     val scope = rememberCoroutineScope()
     val showMessage: (String) -> Unit = { message -> scope.launch { snackbarHostState.showSnackbar(message) } }
 
+    /**
+     * Add and Edit both use these. After Save/Update: go back and show the message. Only if
+     * [entry] is still the top screen, so a repeated call can't pop the screen underneath too.
+     */
+    fun onRecordSaved(entry: NavBackStackEntry): (String) -> Unit = { message ->
+        if (navController.currentBackStackEntry == entry) {
+            navController.popBackStack()
+            showMessage(message)
+        }
+    }
+
+    /** "Edit the existing record": replace this form with that record's Edit screen, so Back
+     *  from it returns to where the form was opened from. */
+    val replaceWithEdit: (Long) -> Unit = { id ->
+        navController.popBackStack()
+        editRecord(id)
+    }
+
     Box(modifier) {
         NavHost(
             navController = navController,
@@ -84,21 +103,11 @@ fun HealthMateNavHost(
                 )
             }
 
-            composable(Screen.AddRecord.route) {
+            composable(Screen.AddRecord.route) { entry ->
                 AddEditRecordScreen(
                     onBack = goBack,
-                    onSaved = { message ->
-                        // Pops only if Add is still on top, so a repeated call can't pop the Dashboard too.
-                        if (navController.popBackStack(Screen.AddRecord.route, inclusive = true)) {
-                            showMessage(message)
-                        }
-                    },
-                    onEditExisting = { id ->
-                        // Swap Add for Edit, so Back from Edit returns to where Add was opened from.
-                        navController.navigate(Screen.EditRecord.createRoute(id)) {
-                            popUpTo(Screen.AddRecord.route) { inclusive = true }
-                        }
-                    }
+                    onSaved = onRecordSaved(entry),
+                    onEditExisting = replaceWithEdit
                 )
             }
 
@@ -106,15 +115,11 @@ fun HealthMateNavHost(
                 route = Screen.EditRecord.route,
                 arguments = listOf(navArgument(Screen.ARG_RECORD_ID) { type = NavType.LongType })
             ) { entry ->
-                val recordId = entry.arguments?.getLong(Screen.ARG_RECORD_ID) ?: 0L
-                PlaceholderScreen(
-                    title = "Edit Record",
-                    details = "Record id: $recordId",
+                // Same screen as Add; the ViewModel reads the record id from this route and pre-fills it.
+                AddEditRecordScreen(
                     onBack = goBack,
-                    actions = listOf(
-                        PlaceholderAction("Update Record", goBack),
-                        PlaceholderAction("Cancel", goBack)
-                    )
+                    onSaved = onRecordSaved(entry),
+                    onEditExisting = replaceWithEdit
                 )
             }
 

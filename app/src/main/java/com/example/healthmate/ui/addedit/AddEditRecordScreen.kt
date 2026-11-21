@@ -38,6 +38,7 @@ import com.example.healthmate.domain.RecordFormErrors
 import com.example.healthmate.domain.RecordValidation
 import com.example.healthmate.ui.components.AppTopBar
 import com.example.healthmate.ui.components.DatePickerField
+import com.example.healthmate.ui.components.EmptyState
 import com.example.healthmate.ui.components.HealthStat
 import com.example.healthmate.ui.components.NumberInputField
 import com.example.healthmate.ui.components.PhotoPickerBox
@@ -47,7 +48,9 @@ import com.example.healthmate.ui.theme.Spacing
 import java.time.LocalDate
 
 /**
- * Add New Record screen, spec 4.3 (written so Edit Record, spec 4.4, can reuse it).
+ * Add New Record (spec 4.3) and Edit Record (spec 4.4) share this screen.
+ * The ViewModel decides the mode from the route: with a record id the form is pre-filled, the
+ * title is "Edit Record" and the button is "Update Record"; without one it is a new record.
  *
  * This stateful version gets the ViewModel and reacts to one-off results; all drawing happens in
  * the stateless [AddEditRecordContent]. Navigation is passed in as lambdas:
@@ -117,6 +120,16 @@ fun AddEditRecordContent(
             Box(Modifier.fillMaxSize().padding(innerPadding), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator()
             }
+            return@Scaffold
+        }
+        if (state.loadError != null) {
+            // Edit mode, but the record is gone: no form, just a way back.
+            EmptyState(
+                title = state.loadError,
+                modifier = Modifier.fillMaxSize().padding(innerPadding),
+                actionLabel = "Go back",
+                onAction = onBack
+            )
             return@Scaffold
         }
 
@@ -192,6 +205,25 @@ fun AddEditRecordContent(
 }
 
 // ---------- Previews ----------
+
+@Preview(showBackground = true)
+@Composable
+private fun EditRecordPreview() {
+    HealthMateTheme {
+        AddEditRecordContent(
+            state = AddEditUiState(
+                recordId = 12,
+                today = PreviewToday,
+                date = PreviewToday.minusDays(2),
+                steps = "8450",
+                calories = "320",
+                water = "2100"
+            ),
+            onBack = {}, onDateSelected = {}, onStepsChange = {}, onCaloriesChange = {},
+            onWaterChange = {}, onPhotoPicked = {}, onRemovePhoto = {}, onEditExisting = {}, onSave = {}
+        )
+    }
+}
 
 private val PreviewToday = LocalDate.of(2026, 11, 21)
 

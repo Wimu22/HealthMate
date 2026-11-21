@@ -1,6 +1,15 @@
 package com.example.healthmate.ui.navigation
 
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -9,7 +18,9 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.healthmate.domain.SortOrder
+import com.example.healthmate.ui.addedit.AddEditRecordScreen
 import com.example.healthmate.ui.dashboard.DashboardScreen
+import kotlinx.coroutines.launch
 
 /**
  * The navigation graph (spec section 6):
@@ -26,6 +37,9 @@ import com.example.healthmate.ui.dashboard.DashboardScreen
  *
  * Back always returns to the previous screen (the system back button and the top bar arrow both
  * pop the back stack). Save, Update and Delete also pop back, as the spec requires.
+ *
+ * Success messages ("Record saved", …) use one Snackbar shared by the whole app, drawn on top of
+ * the NavHost. That way the message stays visible on the previous screen after going back.
  */
 @Composable
 fun HealthMateNavHost(
@@ -37,112 +51,132 @@ fun HealthMateNavHost(
     val editRecord: (Long) -> Unit = { id -> navController.navigate(Screen.EditRecord.createRoute(id)) }
     val addRecord: () -> Unit = { navController.navigate(Screen.AddRecord.route) }
 
-    NavHost(
-        navController = navController,
-        startDestination = Screen.Dashboard.route,
-        modifier = modifier
-    ) {
-        composable(Screen.Dashboard.route) {
-            DashboardScreen(
-                onAddRecord = addRecord,
-                onAllRecords = { navController.navigate(Screen.AllRecords.route) },
-                onOpenRecord = openRecord,
-                onSearch = { startDate, endDate, sortOrder ->
-                    navController.navigate(Screen.SearchResults.createRoute(startDate, endDate, sortOrder))
-                }
-            )
+    val snackbarHostState = remember { SnackbarHostState() }
+    // This scope lives as long as the NavHost, so the message survives leaving the Add screen.
+    val scope = rememberCoroutineScope()
+    val showMessage: (String) -> Unit = { message -> scope.launch { snackbarHostState.showSnackbar(message) } }
+
+    Box(modifier) {
+        NavHost(
+            navController = navController,
+            startDestination = Screen.Dashboard.route
+        ) {
+            composable(Screen.Dashboard.route) {
+                DashboardScreen(
+                    onAddRecord = addRecord,
+                    onAllRecords = { navController.navigate(Screen.AllRecords.route) },
+                    onOpenRecord = openRecord,
+                    onSearch = { startDate, endDate, sortOrder ->
+                        navController.navigate(Screen.SearchResults.createRoute(startDate, endDate, sortOrder))
+                    }
+                )
+            }
+
+            composable(Screen.AllRecords.route) {
+                PlaceholderScreen(
+                    title = "All Records",
+                    onBack = goBack,
+                    actions = listOf(
+                        PlaceholderAction("Open record $SAMPLE_RECORD_ID") { openRecord(SAMPLE_RECORD_ID) },
+                        PlaceholderAction("Edit record $SAMPLE_RECORD_ID") { editRecord(SAMPLE_RECORD_ID) },
+                        PlaceholderAction("Add New Record", addRecord)
+                    )
+                )
+            }
+
+            composable(Screen.AddRecord.route) {
+                AddEditRecordScreen(
+                    onBack = goBack,
+                    onSaved = { message ->
+                        // Pops only if Add is still on top, so a repeated call can't pop the Dashboard too.
+                        if (navController.popBackStack(Screen.AddRecord.route, inclusive = true)) {
+                            showMessage(message)
+                        }
+                    },
+                    onEditExisting = { id ->
+                        // Swap Add for Edit, so Back from Edit returns to where Add was opened from.
+                        navController.navigate(Screen.EditRecord.createRoute(id)) {
+                            popUpTo(Screen.AddRecord.route) { inclusive = true }
+                        }
+                    }
+                )
+            }
+
+            composable(
+                route = Screen.EditRecord.route,
+                arguments = listOf(navArgument(Screen.ARG_RECORD_ID) { type = NavType.LongType })
+            ) { entry ->
+                val recordId = entry.arguments?.getLong(Screen.ARG_RECORD_ID) ?: 0L
+                PlaceholderScreen(
+                    title = "Edit Record",
+                    details = "Record id: $recordId",
+                    onBack = goBack,
+                    actions = listOf(
+                        PlaceholderAction("Update Record", goBack),
+                        PlaceholderAction("Cancel", goBack)
+                    )
+                )
+            }
+
+            composable(
+                route = Screen.RecordView.route,
+                arguments = listOf(navArgument(Screen.ARG_RECORD_ID) { type = NavType.LongType })
+            ) { entry ->
+                val recordId = entry.arguments?.getLong(Screen.ARG_RECORD_ID) ?: 0L
+                PlaceholderScreen(
+                    title = "Record View",
+                    details = "Record id: $recordId",
+                    onBack = goBack,
+                    actions = listOf(
+                        PlaceholderAction("Add New", addRecord),
+                        PlaceholderAction("Edit") { editRecord(recordId) },
+                        // After Delete, return to the list we came from.
+                        PlaceholderAction("Delete", goBack)
+                    )
+                )
+            }
+
+            composable(
+                route = Screen.SearchResults.route,
+                arguments = listOf(
+                    navArgument(Screen.ARG_START_DATE) {
+                        type = NavType.StringType
+                        nullable = true
+                        defaultValue = null
+                    },
+                    navArgument(Screen.ARG_END_DATE) {
+                        type = NavType.StringType
+                        nullable = true
+                        defaultValue = null
+                    },
+                    navArgument(Screen.ARG_SORT) {
+                        type = NavType.StringType
+                        defaultValue = SortOrder.NEWEST_FIRST.name
+                    }
+                )
+            ) { entry ->
+                val args = entry.arguments
+                val startDate = args?.getString(Screen.ARG_START_DATE)
+                val endDate = args?.getString(Screen.ARG_END_DATE)
+                val sort = args?.getString(Screen.ARG_SORT) ?: SortOrder.NEWEST_FIRST.name
+                PlaceholderScreen(
+                    title = "Search Results",
+                    details = "From: ${startDate ?: "any"}\nTo: ${endDate ?: "any"}\nSort: $sort",
+                    onBack = goBack,
+                    actions = listOf(
+                        PlaceholderAction("Open record $SAMPLE_RECORD_ID") { openRecord(SAMPLE_RECORD_ID) },
+                        PlaceholderAction("Reset filters", goBack)
+                    )
+                )
+            }
         }
 
-        composable(Screen.AllRecords.route) {
-            PlaceholderScreen(
-                title = "All Records",
-                onBack = goBack,
-                actions = listOf(
-                    PlaceholderAction("Open record $SAMPLE_RECORD_ID") { openRecord(SAMPLE_RECORD_ID) },
-                    PlaceholderAction("Edit record $SAMPLE_RECORD_ID") { editRecord(SAMPLE_RECORD_ID) },
-                    PlaceholderAction("Add New Record", addRecord)
-                )
-            )
-        }
-
-        composable(Screen.AddRecord.route) {
-            PlaceholderScreen(
-                title = "Add New Record",
-                onBack = goBack,
-                actions = listOf(
-                    PlaceholderAction("Save Record", goBack),
-                    PlaceholderAction("Cancel", goBack)
-                )
-            )
-        }
-
-        composable(
-            route = Screen.EditRecord.route,
-            arguments = listOf(navArgument(Screen.ARG_RECORD_ID) { type = NavType.LongType })
-        ) { entry ->
-            val recordId = entry.arguments?.getLong(Screen.ARG_RECORD_ID) ?: 0L
-            PlaceholderScreen(
-                title = "Edit Record",
-                details = "Record id: $recordId",
-                onBack = goBack,
-                actions = listOf(
-                    PlaceholderAction("Update Record", goBack),
-                    PlaceholderAction("Cancel", goBack)
-                )
-            )
-        }
-
-        composable(
-            route = Screen.RecordView.route,
-            arguments = listOf(navArgument(Screen.ARG_RECORD_ID) { type = NavType.LongType })
-        ) { entry ->
-            val recordId = entry.arguments?.getLong(Screen.ARG_RECORD_ID) ?: 0L
-            PlaceholderScreen(
-                title = "Record View",
-                details = "Record id: $recordId",
-                onBack = goBack,
-                actions = listOf(
-                    PlaceholderAction("Add New", addRecord),
-                    PlaceholderAction("Edit") { editRecord(recordId) },
-                    // After Delete, return to the list we came from.
-                    PlaceholderAction("Delete", goBack)
-                )
-            )
-        }
-
-        composable(
-            route = Screen.SearchResults.route,
-            arguments = listOf(
-                navArgument(Screen.ARG_START_DATE) {
-                    type = NavType.StringType
-                    nullable = true
-                    defaultValue = null
-                },
-                navArgument(Screen.ARG_END_DATE) {
-                    type = NavType.StringType
-                    nullable = true
-                    defaultValue = null
-                },
-                navArgument(Screen.ARG_SORT) {
-                    type = NavType.StringType
-                    defaultValue = SortOrder.NEWEST_FIRST.name
-                }
-            )
-        ) { entry ->
-            val args = entry.arguments
-            val startDate = args?.getString(Screen.ARG_START_DATE)
-            val endDate = args?.getString(Screen.ARG_END_DATE)
-            val sort = args?.getString(Screen.ARG_SORT) ?: SortOrder.NEWEST_FIRST.name
-            PlaceholderScreen(
-                title = "Search Results",
-                details = "From: ${startDate ?: "any"}\nTo: ${endDate ?: "any"}\nSort: $sort",
-                onBack = goBack,
-                actions = listOf(
-                    PlaceholderAction("Open record $SAMPLE_RECORD_ID") { openRecord(SAMPLE_RECORD_ID) },
-                    PlaceholderAction("Reset filters", goBack)
-                )
-            )
-        }
+        SnackbarHost(
+            hostState = snackbarHostState,
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .windowInsetsPadding(WindowInsets.safeDrawing) // stay above the navigation bar
+        )
     }
 }
 

@@ -1,5 +1,6 @@
 package com.example.healthmate.ui.addedit
 
+import android.net.Uri
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -39,6 +40,7 @@ import com.example.healthmate.ui.components.AppTopBar
 import com.example.healthmate.ui.components.DatePickerField
 import com.example.healthmate.ui.components.HealthStat
 import com.example.healthmate.ui.components.NumberInputField
+import com.example.healthmate.ui.components.PhotoPickerBox
 import com.example.healthmate.ui.components.PrimaryButton
 import com.example.healthmate.ui.theme.HealthMateTheme
 import com.example.healthmate.ui.theme.Spacing
@@ -83,6 +85,8 @@ fun AddEditRecordScreen(
         onStepsChange = viewModel::onStepsChange,
         onCaloriesChange = viewModel::onCaloriesChange,
         onWaterChange = viewModel::onWaterChange,
+        onPhotoPicked = viewModel::onPhotoPicked,
+        onRemovePhoto = viewModel::onPhotoRemoved,
         onEditExisting = onEditExisting,
         onSave = viewModel::saveRecord
     )
@@ -96,6 +100,8 @@ fun AddEditRecordContent(
     onStepsChange: (String) -> Unit,
     onCaloriesChange: (String) -> Unit,
     onWaterChange: (String) -> Unit,
+    onPhotoPicked: (Uri) -> Unit,
+    onRemovePhoto: () -> Unit,
     onEditExisting: (Long) -> Unit,
     onSave: () -> Unit,
     modifier: Modifier = Modifier,
@@ -165,6 +171,15 @@ fun AddEditRecordContent(
                 imeAction = ImeAction.Done // last field: the keyboard's button closes the keyboard
             )
 
+            // Optional selfie: Photo Picker (no permission needed), preview, change or remove.
+            Spacer(Modifier.height(Spacing.xs))
+            Text("Selfie photo (optional)", style = MaterialTheme.typography.titleSmall)
+            PhotoPickerBox(
+                photo = state.photoPath,
+                onPhotoPicked = onPhotoPicked,
+                onRemovePhoto = onRemovePhoto
+            )
+
             Spacer(Modifier.height(Spacing.sm))
             PrimaryButton(
                 text = if (state.isSaving) "Saving…" else state.saveButtonLabel,
@@ -187,7 +202,7 @@ private fun AddRecordEmptyPreview() {
         AddEditRecordContent(
             state = AddEditUiState(today = PreviewToday, date = PreviewToday),
             onBack = {}, onDateSelected = {}, onStepsChange = {}, onCaloriesChange = {},
-            onWaterChange = {}, onEditExisting = {}, onSave = {}
+            onWaterChange = {}, onPhotoPicked = {}, onRemovePhoto = {}, onEditExisting = {}, onSave = {}
         )
     }
 }
@@ -211,7 +226,7 @@ private fun AddRecordErrorsPreview() {
                 )
             ),
             onBack = {}, onDateSelected = {}, onStepsChange = {}, onCaloriesChange = {},
-            onWaterChange = {}, onEditExisting = {}, onSave = {}
+            onWaterChange = {}, onPhotoPicked = {}, onRemovePhoto = {}, onEditExisting = {}, onSave = {}
         )
     }
 }

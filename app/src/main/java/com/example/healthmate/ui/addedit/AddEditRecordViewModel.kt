@@ -1,6 +1,7 @@
 package com.example.healthmate.ui.addedit
 
 import android.database.sqlite.SQLiteConstraintException
+import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
@@ -10,6 +11,8 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.example.healthmate.data.local.HealthMateDatabase
 import com.example.healthmate.data.local.HealthRecord
+import com.example.healthmate.data.local.LocalPhotoStorage
+import com.example.healthmate.data.local.PhotoStorage
 import com.example.healthmate.data.repository.HealthRecordRepository
 import com.example.healthmate.domain.RecordFormErrors
 import com.example.healthmate.domain.RecordFormResult
@@ -35,8 +38,10 @@ data class AddEditUiState(
     val steps: String = "",
     val calories: String = "",
     val water: String = "",
-    /** Saved selfie file in app-private storage, or null for no photo. */
+    /** Selfie file in app-private storage, or null for no photo (the photo is optional). */
     val photoPath: String? = null,
+    /** True while a picked photo is being copied into app storage. */
+    val isProcessingPhoto: Boolean = false,
     val errors: RecordFormErrors = RecordFormErrors(),
     /** Set when the chosen date already has a record, so the screen can offer to edit that record. */
     val duplicateRecordId: Long? = null,
@@ -51,7 +56,7 @@ data class AddEditUiState(
     val isEditMode: Boolean get() = recordId != null
     val title: String get() = if (isEditMode) "Edit Record" else "Add New Record"
     val saveButtonLabel: String get() = if (isEditMode) "Update Record" else "Save Record"
-    val canSave: Boolean get() = !isLoading && !isSaving && savedMessage == null
+    val canSave: Boolean get() = !isLoading && !isSaving && !isProcessingPhoto && savedMessage == null
 }
 
 /**
@@ -65,10 +70,16 @@ data class AddEditUiState(
  * is re-checked as the user types, so an error disappears as soon as it is fixed. The
  * one-record-per-date rule is also checked as soon as a date is picked, so the user finds out early.
  *
+ * Selfie (spec 4.3): a picked photo is copied into app storage straight away, so the preview shows
+ * the app's own copy. Copies that never get saved (replaced, removed, or the user leaves without
+ * saving) are deleted again, so no unused files pile up. The photo the record already had is only
+ * deleted by the repository once the change is actually saved.
+ *
  * [currentDate] is a parameter so tests can fix "today" to a known date.
  */
 class AddEditRecordViewModel(
     private val repository: HealthRecordRepository,
+    private val photoStorage: PhotoStorage,
     private val recordId: Long?,
     private val currentDate: () -> LocalDate = { LocalDate.now() }
 ) : ViewModel() {
@@ -86,6 +97,9 @@ class AddEditRecordViewModel(
     /** Becomes true on the first Save tap; from then on, errors update live while typing. */
     private var hasTriedToSave = false
     private var duplicateCheckJob: Job? = null
+
+    /** A photo copied during this visit that is not saved in the database yet (null if none). */
+    private var unsavedPhotoPath: String? = null
 
     init {
         if (recordId != null) {
@@ -123,10 +137,31 @@ class AddEditRecordViewModel(
         it.copy(water = value, errors = it.errors.copy(water = liveError { RecordValidation.validateWater(value) }))
     }
 
-    /** [path] is the selfie after it has been copied into app-private storage. */
-    fun onPhotoChanged(path: String) = _uiState.update { it.copy(photoPath = path) }
+    /** The user picked an image with the Photo Picker: copy it into app storage and preview it. */
+    fun onPhotoPicked(uri: Uri) {
+        if (_uiState.value.isProcessingPhoto) return
+        _uiState.update { it.copy(isProcessingPhoto = true) }
+        viewModelScope.launch {
+            try {
+                val newPath = photoStorage.savePhoto(uri)
+                discardUnsavedPhoto() // replacing a photo picked earlier in this visit
+                unsavedPhotoPath = newPath
+                _uiState.update { it.copy(photoPath = newPath, isProcessingPhoto = false) }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                _uiState.update {
+                    it.copy(isProcessingPhoto = false, errorMessage = "Could not add this photo. Please try another one.")
+                }
+            }
+        }
+    }
 
-    fun onPhotoRemoved() = _uiState.update { it.copy(photoPath = null) }
+    /** Removes the selfie from the form. The record's saved photo is only deleted when saving. */
+    fun onPhotoRemoved() {
+        discardUnsavedPhoto()
+        _uiState.update { it.copy(photoPath = null) }
+    }
 
     /** The screen calls this after showing [AddEditUiState.errorMessage]. */
     fun onErrorMessageShown() = _uiState.update { it.copy(errorMessage = null) }
@@ -173,6 +208,7 @@ class AddEditRecordViewModel(
                     photoPath = state.photoPath
                 )
                 if (recordId == null) repository.addRecord(record) else repository.updateRecord(record)
+                unsavedPhotoPath = null // the photo now belongs to the saved record
 
                 _uiState.update {
                     it.copy(isSaving = false, savedMessage = if (recordId == null) "Record saved" else "Record updated")
@@ -190,7 +226,18 @@ class AddEditRecordViewModel(
         }
     }
 
+    /** Leaving the screen without saving: delete the photo copied for nothing. */
+    override fun onCleared() {
+        // Mid-save the record may still be written with this photo, so keep the file then.
+        if (!_uiState.value.isSaving) discardUnsavedPhoto()
+    }
+
     // ---------- Helpers ----------
+
+    private fun discardUnsavedPhoto() {
+        unsavedPhotoPath?.let { runCatching { photoStorage.deletePhoto(it) } }
+        unsavedPhotoPath = null
+    }
 
     private fun loadRecord(id: Long) {
         viewModelScope.launch {
@@ -265,7 +312,7 @@ class AddEditRecordViewModel(
                 val app = checkNotNull(this[APPLICATION_KEY])
                 val recordId = createSavedStateHandle().get<Long>(Screen.ARG_RECORD_ID)
                 val dao = HealthMateDatabase.getInstance(app).healthRecordDao()
-                AddEditRecordViewModel(HealthRecordRepository(dao), recordId)
+                AddEditRecordViewModel(HealthRecordRepository(dao), LocalPhotoStorage(app), recordId)
             }
         }
     }

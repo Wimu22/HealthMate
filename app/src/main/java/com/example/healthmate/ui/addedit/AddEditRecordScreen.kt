@@ -169,7 +169,7 @@ fun AddEditRecordContent(
             NumberInputField(
                 value = state.calories,
                 onValueChange = onCaloriesChange,
-                label = "Calories burned",
+                label = "Calories burned (kcal)",
                 unit = HealthStat.CALORIES.unit,
                 leadingIcon = HealthStat.CALORIES.icon,
                 error = state.errors.calories
@@ -177,7 +177,7 @@ fun AddEditRecordContent(
             NumberInputField(
                 value = state.water,
                 onValueChange = onWaterChange,
-                label = "Water intake",
+                label = "Water intake (ml)",
                 unit = HealthStat.WATER.unit,
                 leadingIcon = HealthStat.WATER.icon,
                 error = state.errors.water,

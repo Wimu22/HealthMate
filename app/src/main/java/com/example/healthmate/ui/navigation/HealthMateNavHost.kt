@@ -22,6 +22,7 @@ import com.example.healthmate.domain.SortOrder
 import com.example.healthmate.ui.addedit.AddEditRecordScreen
 import com.example.healthmate.ui.dashboard.DashboardScreen
 import com.example.healthmate.ui.detail.RecordDetailScreen
+import com.example.healthmate.ui.records.AllRecordsScreen
 import kotlinx.coroutines.launch
 
 /**
@@ -93,14 +94,13 @@ fun HealthMateNavHost(
             }
 
             composable(Screen.AllRecords.route) {
-                PlaceholderScreen(
-                    title = "All Records",
+                AllRecordsScreen(
                     onBack = goBack,
-                    actions = listOf(
-                        PlaceholderAction("Open record $SAMPLE_RECORD_ID") { openRecord(SAMPLE_RECORD_ID) },
-                        PlaceholderAction("Edit record $SAMPLE_RECORD_ID") { editRecord(SAMPLE_RECORD_ID) },
-                        PlaceholderAction("Add New Record", addRecord)
-                    )
+                    onAddRecord = addRecord,
+                    onOpenRecord = openRecord,
+                    onEditRecord = editRecord,
+                    // Delete happens on this screen (we stay here), so just show "Record deleted".
+                    onShowMessage = showMessage
                 )
             }
 

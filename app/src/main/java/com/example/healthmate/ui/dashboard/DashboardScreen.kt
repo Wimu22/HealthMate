@@ -21,7 +21,6 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.outlined.ErrorOutline
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material.icons.outlined.Tune
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -33,9 +32,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.heading
@@ -57,6 +53,8 @@ import com.example.healthmate.ui.components.RecordCard
 import com.example.healthmate.ui.components.SecondaryButton
 import com.example.healthmate.ui.components.StatCard
 import com.example.healthmate.ui.components.toLongDisplayDate
+import com.example.healthmate.ui.search.FilterBottomSheet
+import com.example.healthmate.ui.search.SearchViewModel
 import com.example.healthmate.ui.theme.BorderWidth
 import com.example.healthmate.ui.theme.HealthMateTheme
 import com.example.healthmate.ui.theme.Spacing
@@ -75,14 +73,13 @@ fun DashboardScreen(
     onAllRecords: () -> Unit,
     onOpenRecord: (Long) -> Unit,
     onSearch: (startDate: String?, endDate: String?, sortOrder: SortOrder) -> Unit,
-    viewModel: DashboardViewModel = viewModel(factory = DashboardViewModel.Factory)
+    viewModel: DashboardViewModel = viewModel(factory = DashboardViewModel.Factory),
+    searchViewModel: SearchViewModel = viewModel(factory = SearchViewModel.Factory)
 ) {
     // Collects only while the screen is visible, so DB queries pause when the app is in the background.
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-    // Placeholder until the Filter bottom sheet (spec 4.6) is built: a dialog that can only
-    // "search all records". The sheet will replace it and call the same onSearch.
-    var showFilters by rememberSaveable { mutableStateOf(false) }
+    val searchState by searchViewModel.uiState.collectAsStateWithLifecycle()
 
     DashboardContent(
         state = uiState,
@@ -90,23 +87,23 @@ fun DashboardScreen(
         onAddRecord = onAddRecord,
         onAllRecords = onAllRecords,
         onOpenRecord = onOpenRecord,
-        onOpenFilters = { showFilters = true }
+        onOpenFilters = searchViewModel::openFilters
     )
 
-    if (showFilters) {
-        AlertDialog(
-            onDismissRequest = { showFilters = false },
-            icon = { Icon(Icons.Outlined.Tune, contentDescription = null) },
-            title = { Text("Filters") },
-            text = { Text("Date range and sort filters are coming soon.") },
-            confirmButton = {
-                TextButton(onClick = {
-                    showFilters = false
-                    onSearch(null, null, SortOrder.NEWEST_FIRST)
-                }) { Text("Show all records") }
-            },
-            dismissButton = {
-                TextButton(onClick = { showFilters = false }) { Text("Close") }
+    if (searchState.showFilterSheet) {
+        FilterBottomSheet(
+            state = searchState,
+            onDismiss = searchViewModel::dismissFilters,
+            onStartDateChange = searchViewModel::onStartDateChange,
+            onEndDateChange = searchViewModel::onEndDateChange,
+            onSortOrderChange = searchViewModel::onSortOrderChange,
+            onReset = searchViewModel::resetFilters,
+            onApply = {
+                // null = invalid date range: the sheet stays open and shows the error.
+                searchViewModel.applyFilters()?.let { filter ->
+                    // Dates travel in the database format, yyyy-MM-dd (LocalDate.toString()).
+                    onSearch(filter.startDate?.toString(), filter.endDate?.toString(), filter.sortOrder)
+                }
             }
         )
     }

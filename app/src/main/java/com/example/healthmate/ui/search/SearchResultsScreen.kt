@@ -42,6 +42,7 @@ import com.example.healthmate.ui.components.AppTopBar
 import com.example.healthmate.ui.components.ConfirmDeleteDialog
 import com.example.healthmate.ui.components.EmptyState
 import com.example.healthmate.ui.components.RecordCard
+import com.example.healthmate.ui.components.UserMessage
 import com.example.healthmate.ui.theme.HealthMateTheme
 import com.example.healthmate.ui.theme.Spacing
 import java.time.LocalDate
@@ -58,7 +59,7 @@ fun SearchResultsScreen(
     onBack: () -> Unit,
     onOpenRecord: (recordId: Long) -> Unit,
     onEditRecord: (recordId: Long) -> Unit,
-    onShowMessage: (message: String) -> Unit,
+    onShowMessage: (message: UserMessage) -> Unit,
     viewModel: SearchViewModel = viewModel(factory = SearchViewModel.Factory)
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()

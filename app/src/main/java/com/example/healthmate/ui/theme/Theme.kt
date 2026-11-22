@@ -39,6 +39,11 @@ private val LightColors = lightColorScheme(
     outline = BorderGrey,
     outlineVariant = BorderGrey,
 
+    // Snackbar background/text/action. Without these Material uses its own purple-grey defaults.
+    inverseSurface = TextPrimary,
+    inverseOnSurface = White,
+    inversePrimary = PrimaryBlueLight,
+
     error = ErrorRed,
     onError = White,
     errorContainer = ErrorRedLight,

@@ -9,6 +9,7 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import com.example.healthmate.data.local.HealthMateDatabase
 import com.example.healthmate.data.local.HealthRecord
 import com.example.healthmate.data.repository.HealthRecordRepository
+import com.example.healthmate.ui.components.UserMessage
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -31,7 +32,7 @@ data class AllRecordsUiState(
     val recordToDelete: HealthRecord? = null,
     val isDeleting: Boolean = false,
     /** A one-off message for the Snackbar ("Record deleted" or a friendly error). */
-    val message: String? = null
+    val message: UserMessage? = null
 )
 
 /**
@@ -86,11 +87,11 @@ class AllRecordsViewModel(
         viewModelScope.launch {
             val message = try {
                 repository.deleteRecord(record) // also deletes the selfie file, if any
-                "Record deleted"
+                UserMessage("Record deleted")
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                "Could not delete the record. Please try again."
+                UserMessage("Could not delete the record. Please try again.", isError = true)
             }
             screenState.update { it.copy(isDeleting = false, message = message) }
         }

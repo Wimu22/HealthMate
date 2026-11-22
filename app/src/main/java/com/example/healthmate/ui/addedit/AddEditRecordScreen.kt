@@ -19,7 +19,6 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -36,7 +35,10 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.healthmate.domain.RecordFormErrors
 import com.example.healthmate.domain.RecordValidation
+import com.example.healthmate.ui.components.AppSnackbarHost
 import com.example.healthmate.ui.components.AppTopBar
+import com.example.healthmate.ui.components.UserMessage
+import com.example.healthmate.ui.components.showMessage
 import com.example.healthmate.ui.components.DatePickerField
 import com.example.healthmate.ui.components.EmptyState
 import com.example.healthmate.ui.components.HealthStat
@@ -75,7 +77,7 @@ fun AddEditRecordScreen(
     // Database problem → show a friendly message on this screen, then mark it as shown.
     LaunchedEffect(uiState.errorMessage) {
         uiState.errorMessage?.let {
-            snackbarHostState.showSnackbar(it)
+            snackbarHostState.showMessage(UserMessage(it, isError = true))
             viewModel.onErrorMessageShown()
         }
     }
@@ -114,7 +116,7 @@ fun AddEditRecordContent(
         modifier = modifier.fillMaxSize(),
         containerColor = MaterialTheme.colorScheme.background,
         topBar = { AppTopBar(title = state.title, onBack = onBack) },
-        snackbarHost = { SnackbarHost(snackbarHostState) }
+        snackbarHost = { AppSnackbarHost(snackbarHostState) }
     ) { innerPadding ->
         if (state.isLoading) {
             Box(Modifier.fillMaxSize().padding(innerPadding), contentAlignment = Alignment.Center) {

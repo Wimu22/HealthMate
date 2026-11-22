@@ -4,7 +4,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -20,6 +19,9 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.healthmate.domain.SortOrder
 import com.example.healthmate.ui.addedit.AddEditRecordScreen
+import com.example.healthmate.ui.components.AppSnackbarHost
+import com.example.healthmate.ui.components.UserMessage
+import com.example.healthmate.ui.components.showMessage
 import com.example.healthmate.ui.dashboard.DashboardScreen
 import com.example.healthmate.ui.detail.RecordDetailScreen
 import com.example.healthmate.ui.records.AllRecordsScreen
@@ -58,7 +60,7 @@ fun HealthMateNavHost(
     val snackbarHostState = remember { SnackbarHostState() }
     // This scope lives as long as the NavHost, so the message survives leaving the Add screen.
     val scope = rememberCoroutineScope()
-    val showMessage: (String) -> Unit = { message -> scope.launch { snackbarHostState.showSnackbar(message) } }
+    val showMessage: (UserMessage) -> Unit = { message -> scope.launch { snackbarHostState.showMessage(message) } }
 
     /**
      * After Save, Update or Delete: go back and show the message ("Record saved", …). Only if
@@ -67,7 +69,7 @@ fun HealthMateNavHost(
     fun goBackWithMessage(entry: NavBackStackEntry): (String) -> Unit = { message ->
         if (navController.currentBackStackEntry == entry) {
             navController.popBackStack()
-            showMessage(message)
+            showMessage(UserMessage(message)) // a success: saved, updated or deleted
         }
     }
 
@@ -167,7 +169,7 @@ fun HealthMateNavHost(
             }
         }
 
-        SnackbarHost(
+        AppSnackbarHost(
             hostState = snackbarHostState,
             modifier = Modifier
                 .align(Alignment.BottomCenter)

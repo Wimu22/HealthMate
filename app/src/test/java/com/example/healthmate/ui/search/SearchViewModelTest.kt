@@ -6,6 +6,7 @@ import com.example.healthmate.domain.RecordValidation
 import com.example.healthmate.domain.SearchFilter
 import com.example.healthmate.domain.SortOrder
 import com.example.healthmate.testutil.FakeHealthRecordDao
+import com.example.healthmate.ui.components.UserMessage
 import com.example.healthmate.testutil.MainDispatcherRule
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import org.junit.Assert.assertEquals
@@ -323,7 +324,7 @@ class SearchViewModelTest {
 
         assertNull(vm.uiState.value.recordToDelete)
         assertEquals(listOf(nov10), vm.uiState.value.results)
-        assertEquals("Record deleted", vm.uiState.value.message)
+        assertEquals(UserMessage("Record deleted", isError = false), vm.uiState.value.message)
 
         vm.onMessageShown()
         assertNull(vm.uiState.value.message)
@@ -346,7 +347,7 @@ class SearchViewModelTest {
         vm.onDeleteClick(nov5)
         vm.confirmDelete()
 
-        assertEquals("Could not delete the record. Please try again.", vm.uiState.value.message)
+        assertEquals(UserMessage("Could not delete the record. Please try again.", isError = true), vm.uiState.value.message)
         assertFalse(vm.uiState.value.isDeleting)
         assertEquals(3, vm.uiState.value.results.size)
     }

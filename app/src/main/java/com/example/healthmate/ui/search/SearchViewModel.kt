@@ -13,6 +13,7 @@ import com.example.healthmate.data.local.HealthRecord
 import com.example.healthmate.data.repository.HealthRecordRepository
 import com.example.healthmate.domain.SearchFilter
 import com.example.healthmate.domain.SortOrder
+import com.example.healthmate.ui.components.UserMessage
 import com.example.healthmate.ui.navigation.Screen
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -46,7 +47,7 @@ data class SearchUiState(
     val recordToDelete: HealthRecord? = null,
     val isDeleting: Boolean = false,
     /** A one-off message for the Snackbar ("Record deleted" or a friendly error). */
-    val message: String? = null
+    val message: UserMessage? = null
 ) {
     /** Shown under the end date: "End date must be after start date". */
     val dateRangeError: String? get() = filter.dateRangeError
@@ -184,11 +185,11 @@ class SearchViewModel(
         viewModelScope.launch {
             val message = try {
                 repository.deleteRecord(record) // also deletes the selfie file, if any
-                "Record deleted"
+                UserMessage("Record deleted")
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                "Could not delete the record. Please try again."
+                UserMessage("Could not delete the record. Please try again.", isError = true)
             }
             _uiState.update { it.copy(isDeleting = false, message = message) }
         }

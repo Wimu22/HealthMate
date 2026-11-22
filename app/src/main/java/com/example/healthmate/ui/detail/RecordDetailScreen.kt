@@ -19,7 +19,6 @@ import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -38,7 +37,10 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil3.compose.AsyncImage
 import com.example.healthmate.data.local.HealthRecord
+import com.example.healthmate.ui.components.AppSnackbarHost
 import com.example.healthmate.ui.components.AppTopBar
+import com.example.healthmate.ui.components.UserMessage
+import com.example.healthmate.ui.components.showMessage
 import com.example.healthmate.ui.components.ConfirmDeleteDialog
 import com.example.healthmate.ui.components.DestructiveButton
 import com.example.healthmate.ui.components.EmptyState
@@ -75,7 +77,7 @@ fun RecordDetailScreen(
 
     LaunchedEffect(uiState.errorMessage) {
         uiState.errorMessage?.let {
-            snackbarHostState.showSnackbar(it)
+            snackbarHostState.showMessage(UserMessage(it, isError = true))
             viewModel.onErrorMessageShown()
         }
     }
@@ -112,7 +114,7 @@ fun RecordDetailContent(
         modifier = modifier.fillMaxSize(),
         containerColor = MaterialTheme.colorScheme.background,
         topBar = { AppTopBar(title = "Record View", onBack = onBack) },
-        snackbarHost = { SnackbarHost(snackbarHostState) }
+        snackbarHost = { AppSnackbarHost(snackbarHostState) }
     ) { innerPadding ->
         val record = state.record
         when {

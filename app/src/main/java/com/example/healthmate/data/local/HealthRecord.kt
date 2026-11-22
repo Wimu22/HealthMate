@@ -24,5 +24,11 @@ data class HealthRecord(
     val water: Int,
     /** Optional selfie stored in the app's private storage (extra feature). */
     @ColumnInfo(name = "photo_path")
-    val photoPath: String? = null
+    val photoPath: String? = null,
+    /**
+     * When the record was last saved or updated, in milliseconds since 1970 (UTC).
+     * Null for the seeded dummy records, so Record View only shows it "if available" (spec 4.5).
+     */
+    @ColumnInfo(name = "updated_at")
+    val updatedAt: Long? = null
 )

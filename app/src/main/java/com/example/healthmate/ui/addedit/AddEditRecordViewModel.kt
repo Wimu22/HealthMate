@@ -78,13 +78,17 @@ data class AddEditUiState(
  * saving) are deleted again, so no unused files pile up. The photo the record already had is only
  * deleted by the repository once the change is actually saved.
  *
+ * Every save or update stores the current time in `updatedAt`, shown on Record View (spec 4.5).
+ *
  * [currentDate] is a parameter so tests can fix "today" to a known date.
  */
 class AddEditRecordViewModel(
     private val repository: HealthRecordRepository,
     private val photoStorage: PhotoStorage,
     private val recordId: Long?,
-    private val currentDate: () -> LocalDate = { LocalDate.now() }
+    private val currentDate: () -> LocalDate = { LocalDate.now() },
+    /** The time saved as "last updated"; a parameter so tests can fix it. */
+    private val currentTimeMillis: () -> Long = { System.currentTimeMillis() }
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(
@@ -208,7 +212,8 @@ class AddEditRecordViewModel(
                     steps = valid.steps,
                     calories = valid.calories,
                     water = valid.water,
-                    photoPath = state.photoPath
+                    photoPath = state.photoPath,
+                    updatedAt = currentTimeMillis() // shown on Record View as "Last updated …"
                 )
                 if (recordId == null) repository.addRecord(record) else repository.updateRecord(record)
                 unsavedPhotoPath = null // the photo now belongs to the saved record

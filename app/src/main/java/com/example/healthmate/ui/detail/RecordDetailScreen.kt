@@ -49,6 +49,7 @@ import com.example.healthmate.ui.components.PrimaryButton
 import com.example.healthmate.ui.components.SecondaryButton
 import com.example.healthmate.ui.components.StatCard
 import com.example.healthmate.ui.components.formatRecordDate
+import com.example.healthmate.ui.components.formatUpdatedAt
 import com.example.healthmate.ui.theme.HealthMateTheme
 import com.example.healthmate.ui.theme.Spacing
 import java.io.File
@@ -159,11 +160,21 @@ private fun RecordDetails(
         verticalArrangement = Arrangement.spacedBy(Spacing.md)
     ) {
         // "Wed, 19 Nov 2026"
-        Text(
-            text = formatRecordDate(record.date),
-            style = MaterialTheme.typography.headlineSmall,
-            modifier = Modifier.semantics { heading() }
-        )
+        Column(verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
+            Text(
+                text = formatRecordDate(record.date),
+                style = MaterialTheme.typography.headlineSmall,
+                modifier = Modifier.semantics { heading() }
+            )
+            // Only "if available" (spec 4.5): seeded records were never saved by the user.
+            record.updatedAt?.let { millis ->
+                Text(
+                    text = "Last updated ${formatUpdatedAt(millis)}",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
 
         record.photoPath?.let { path ->
             AsyncImage(
@@ -217,7 +228,10 @@ private fun RecordDetailPreview() {
     HealthMateTheme {
         RecordDetailContent(
             state = RecordDetailUiState(
-                record = HealthRecord(id = 12, date = "2026-11-19", steps = 8450, calories = 320, water = 2100),
+                record = HealthRecord(
+                    id = 12, date = "2026-11-19", steps = 8450, calories = 320, water = 2100,
+                    updatedAt = 1_795_097_100_000 // 19 Nov 2026, 14:05 UTC
+                ),
                 isLoading = false
             ),
             onBack = {}, onAddNew = {}, onEdit = {}, onDeleteClick = {}

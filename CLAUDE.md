@@ -64,7 +64,9 @@ catalog) must equal the bundled Kotlin version.
 - DAO returns `Flow`, so all screens refresh automatically when the database changes.
 - Room table `health_records`: `date` stored as `yyyy-MM-dd` TEXT and unique (one record per day);
   optional `photo_path` points to a selfie copied into app-private storage (picked via Android Photo
-  Picker, loaded with Coil). Deleting a record must also delete its photo file.
+  Picker, loaded with Coil). Deleting a record must also delete its photo file. Optional `updated_at`
+  (epoch millis) is set on every save/update and shown on Record View; schema changes need a Room
+  `Migration` (see `MIGRATION_1_2`) so installed apps keep their data.
 - ~90 days of dummy data are seeded once, on database creation, ending yesterday.
 - Shared composables (StatCard, RecordCard, PrimaryButton, etc.) live in `ui/components`; colours and
   stat-colour mapping are defined in the spec's Design System section — keep the palette to those values.

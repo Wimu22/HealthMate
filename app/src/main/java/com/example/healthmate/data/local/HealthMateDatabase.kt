@@ -6,10 +6,11 @@ import android.database.sqlite.SQLiteDatabase
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
 /** The app's Room (SQLite) database. One instance is shared by the whole app. */
-@Database(entities = [HealthRecord::class], version = 1, exportSchema = false)
+@Database(entities = [HealthRecord::class], version = 2, exportSchema = false)
 abstract class HealthMateDatabase : RoomDatabase() {
 
     abstract fun healthRecordDao(): HealthRecordDao
@@ -28,9 +29,22 @@ abstract class HealthMateDatabase : RoomDatabase() {
                     DATABASE_NAME
                 )
                     .addCallback(SeedCallback)
+                    .addMigrations(MIGRATION_1_2)
                     .build()
                     .also { instance = it }
             }
+    }
+
+    /**
+     * Version 1 → 2 adds the `updated_at` column (spec 4.5: Record View shows when the record was
+     * last updated). Existing records keep all their data and simply get no time (NULL).
+     * Without a migration Room would refuse to open the old database on phones that already
+     * have the app installed.
+     */
+    internal object MIGRATION_1_2 : Migration(1, 2) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("ALTER TABLE health_records ADD COLUMN updated_at INTEGER")
+        }
     }
 
     /**

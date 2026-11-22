@@ -60,6 +60,7 @@ Table name: **`health_records`**
 | `calories` | INTEGER | Calories burned (kcal) |
 | `water` | INTEGER | Water intake in ml |
 | `photo_path` | TEXT, nullable | **Extra feature.** Path to an optional selfie stored in the app's private storage. |
+| `updated_at` | INTEGER, nullable | When the record was last saved or updated (epoch milliseconds). Shown on Record View (4.5). Null for seed records. Added in database version 2. |
 
 Required DAO operations:
 - **Create:** insert a record.

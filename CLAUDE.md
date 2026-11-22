@@ -44,7 +44,7 @@ Room + KSP, Compose (BOM) + Material 3 + icons-extended, Coil, Navigation Compos
 lifecycle-viewmodel-compose / lifecycle-runtime-compose are set up. `MainActivity` (edge-to-edge,
 `HealthMateTheme`) is the launcher activity and hosts `ui/navigation/HealthMateNavHost`.
 Routes are string-based, defined in the sealed `Screen` class (`ui/navigation/Screen.kt`); screens get
-navigation lambdas, never the NavController. Screens not built yet use `PlaceholderScreen`.
+navigation lambdas, never the NavController. Unit tests that touch `viewModelScope` use `MainDispatcherRule` (test sources).
 
 **Kotlin version constraint:** AGP 9.5.1 bundles Kotlin 2.2.10, so the compiler can only read
 libraries built with Kotlin ≤ 2.3. A library whose pom depends on `kotlin-stdlib` 2.4+ (e.g. Coil

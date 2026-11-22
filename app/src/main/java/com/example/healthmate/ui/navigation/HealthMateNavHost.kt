@@ -23,6 +23,7 @@ import com.example.healthmate.ui.addedit.AddEditRecordScreen
 import com.example.healthmate.ui.dashboard.DashboardScreen
 import com.example.healthmate.ui.detail.RecordDetailScreen
 import com.example.healthmate.ui.records.AllRecordsScreen
+import com.example.healthmate.ui.search.SearchResultsScreen
 import kotlinx.coroutines.launch
 
 /**
@@ -155,19 +156,13 @@ fun HealthMateNavHost(
                         defaultValue = SortOrder.NEWEST_FIRST.name
                     }
                 )
-            ) { entry ->
-                val args = entry.arguments
-                val startDate = args?.getString(Screen.ARG_START_DATE)
-                val endDate = args?.getString(Screen.ARG_END_DATE)
-                val sort = args?.getString(Screen.ARG_SORT) ?: SortOrder.NEWEST_FIRST.name
-                PlaceholderScreen(
-                    title = "Search Results",
-                    details = "From: ${startDate ?: "any"}\nTo: ${endDate ?: "any"}\nSort: $sort",
+            ) {
+                // SearchViewModel reads startDate / endDate / sort from this route itself.
+                SearchResultsScreen(
                     onBack = goBack,
-                    actions = listOf(
-                        PlaceholderAction("Open record $SAMPLE_RECORD_ID") { openRecord(SAMPLE_RECORD_ID) },
-                        PlaceholderAction("Reset filters", goBack)
-                    )
+                    onOpenRecord = openRecord,
+                    onEditRecord = editRecord,
+                    onShowMessage = showMessage
                 )
             }
         }
@@ -180,6 +175,3 @@ fun HealthMateNavHost(
         )
     }
 }
-
-/** Placeholder-only: seeded data gives the first record id 1. Removed once real lists exist. */
-private const val SAMPLE_RECORD_ID = 1L

@@ -1,0 +1,21 @@
+# HealthMate – Manual Test Cases
+
+Manual test cases for the main features (spec section 7). Run them on the emulator or a phone with
+a fresh install, so the database holds the ~90 days of seed data, which end **yesterday**. Today
+has no record until TC-01 adds one.
+
+The automated Room DAO tests (`app/src/androidTest/.../HealthRecordDaoTest.kt`) check the same
+database rules at code level. These cases check the app as a user sees it.
+
+| Test ID | Test Scenario | Input | Expected Result | Actual Result | Status |
+|---|---|---|---|---|---|
+| TC-01 | Add a new record with valid data | Dashboard → **Add New Record**. Date: today (default), Steps: `8500`, Calories: `420`, Water: `2300`. Tap **Save Record**. | "Record saved" message appears and the app returns to the Dashboard. The 1 Day totals show 8,500 steps, 420 kcal and 2,300 ml, and the record appears at the top of Recent Records and All Records. | | |
+| TC-02 | Validation errors on the Add form | **Add New Record**. Leave Steps empty, Calories: `20000`, Water: `-5` (or `12.5`). Tap **Save Record**. | The record is not saved. Under each field: "Enter steps between 0 and 100,000", "Enter calories between 0 and 10,000", "Enter water between 0 and 10,000 ml". Future dates are greyed out in the date picker and can't be picked. | | |
+| TC-03 | Duplicate date is rejected | **Add New Record**. Date: yesterday (already has a seeded record), Steps: `5000`, Calories: `300`, Water: `2000`. Tap **Save Record**. | The record is not saved. "A record for this date already exists" appears under Date with an **Edit the existing record** button that opens the existing record's edit form. The old record is unchanged. | | |
+| TC-04 | Edit an existing record | All Records → open the record from TC-01 → **Edit**. Change Steps to `9100` and Water to `2600`. Tap **Update Record**. | "Record updated" message appears and the app returns to the previous screen. Record View, All Records and the Dashboard totals show 9,100 steps and 2,600 ml. Record View shows a "Last updated" time. | | |
+| TC-05 | Delete a record – confirm | Open any record → **Delete** → tap **Delete** in the "Delete record?" dialog. | The dialog closes and "Record deleted" appears. The app returns to the list and the record is gone from All Records, Recent Records and the Dashboard totals. If the record had a selfie, its photo file is removed too. | | |
+| TC-06 | Delete a record – cancel | Open any record → **Delete** → tap **Cancel** in the "Delete record?" dialog. | The dialog closes, nothing is deleted and no message appears. The record still shows on Record View and in All Records. | | |
+| TC-07 | Search by date range | Dashboard → **Filters**. Start date: 1 Nov 2026, End date: 10 Nov 2026, Sort by: Newest first. Tap **Apply**. | Search Results opens with a filter chip like "1 Nov – 10 Nov 2026". It shows 10 records, 10 Nov down to 1 Nov (newest first), and nothing outside the range. Picking an end date before the start date shows "End date must be after start date" and Apply does not search. | | |
+| TC-08 | Sort search results | **Filters**. Same range as TC-07, Sort by: **Highest steps**. Tap **Apply**. Repeat with Oldest first, Highest calories and Highest water. | The same 10 records appear and a chip shows the sort, e.g. "Highest steps". Highest steps: steps go from largest to smallest. Oldest first: 1 Nov down to 10 Nov. Highest calories and Highest water: those values go from largest to smallest. | | |
+| TC-09 | Search with no matching records | **Filters**. Start date and End date: a date before the seed data begins (more than 3 months ago, e.g. 1 Jan 2026). Tap **Apply**. | Search Results shows "No records found." with a **Reset filters** button and no record cards. Tapping Reset filters clears the filters. | | |
+| TC-10 | Dashboard period totals | Dashboard → tap **1 Day**, **7 Days**, **30 Days** and **3 Months** in turn. Check 7 Days by adding up the steps, calories and water of the 7 newest records in All Records (today plus the 6 days before). | Each chip shows different totals that grow with longer periods. The 7 Days totals equal the hand-added sums for today and the previous 6 days. 1 Day shows only today's record (or the "add a record" prompt if today has none). | | |

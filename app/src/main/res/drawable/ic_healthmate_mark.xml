@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    The HealthMate logo mark: a white heart with a blue heartbeat line through it and a small
+    yellow "plus" accent (theme colours: primary #1E5EFF, secondary #FFC83D).
+    Drawn for a blue background. Used by the launcher icon (ic_launcher_foreground) and the
+    Dashboard header (HealthMateLogo), so both always show the same logo.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="54dp"
+    android:height="54dp"
+    android:viewportWidth="54"
+    android:viewportHeight="54">
+    <!-- Heart and pulse use the Material heart's 24-unit coordinates, scaled x2. -->
+    <group
+        android:scaleX="2"
+        android:scaleY="2"
+        android:translateX="1"
+        android:translateY="5.65">
+        <path
+            android:fillColor="#FFFFFFFF"
+            android:pathData="M12,21.35l-1.45,-1.32C5.4,15.36 2,12.28 2,8.5 2,5.42 4.42,3 7.5,3c1.74,0 3.41,0.81 4.5,2.09C13.09,3.81 14.76,3 16.5,3 19.58,3 22,5.42 22,8.5c0,3.78 -3.4,6.86 -8.55,11.54L12,21.35z" />
+        <path
+            android:pathData="M3.6,11H8L9.5,8L11.5,14L13.5,9L15,11H20.4"
+            android:strokeColor="#FF1E5EFF"
+            android:strokeWidth="1.4"
+            android:strokeLineCap="round"
+            android:strokeLineJoin="round" />
+    </group>
+    <!-- Yellow plus accent, top right. -->
+    <path
+        android:pathData="M47,3V11M43,7H51"
+        android:strokeColor="#FFFFC83D"
+        android:strokeWidth="3"
+        android:strokeLineCap="round" />
+</vector>

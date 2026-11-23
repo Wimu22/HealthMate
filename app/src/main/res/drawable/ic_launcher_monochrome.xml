@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Adaptive icon layers are 108dp, but launchers may crop everything outside the centre 66dp
+    circle. A 27dp inset on every side keeps the 54dp logo mark well inside that safe zone.
+-->
+<inset xmlns:android="http://schemas.android.com/apk/res/android"
+    android:drawable="@drawable/ic_healthmate_mark_monochrome"
+    android:inset="27dp" />

@@ -5,6 +5,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -88,9 +89,13 @@ fun RecordCard(
                 }
             }
             Spacer(Modifier.size(Spacing.md))
-            Row(
+            // FlowRow, not Row: with large numbers and a large system font the three stats may not
+            // fit on one line. A Row would squeeze the last one until its unit breaks ("m" / "l");
+            // FlowRow moves the whole stat to the next line instead.
+            FlowRow(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalArrangement = Arrangement.spacedBy(Spacing.xs)
             ) {
                 StatValue(HealthStat.STEPS, record.steps)
                 StatValue(HealthStat.CALORIES, record.calories)
@@ -138,12 +143,16 @@ private fun StatValue(stat: HealthStat, value: Int) {
         Spacer(Modifier.width(Spacing.xs))
         Text(
             text = formatNumber(value),
+            maxLines = 1,
+            softWrap = false,
             style = MaterialTheme.typography.titleSmall,
             color = MaterialTheme.colorScheme.onSurface
         )
         Spacer(Modifier.width(2.dp))
         Text(
             text = stat.unit,
+            maxLines = 1,
+            softWrap = false,
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )

@@ -26,6 +26,10 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.error
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.healthmate.ui.theme.HealthMateTheme
 import com.example.healthmate.ui.theme.Spacing
@@ -65,13 +69,23 @@ fun DatePickerField(
             supportingText = error?.let { { Text(it) } },
             singleLine = true,
             shape = MaterialTheme.shapes.small,
-            modifier = Modifier.fillMaxWidth()
+            // Hidden from screen readers: the tap layer below describes the whole field instead.
+            modifier = Modifier
+                .fillMaxWidth()
+                .clearAndSetSemantics {}
         )
         // A read-only text field does not report taps, so a transparent layer on top catches them.
+        // It also tells TalkBack what the field is ("Date, Mon, 23 Nov 2026"); without this it was
+        // read out as an unlabelled "Button".
+        val description = "$label, ${value?.toDisplayDate() ?: placeholder}"
         Box(
             Modifier
                 .matchParentSize()
                 .clickable(role = Role.Button, onClickLabel = "Choose date") { showDialog = true }
+                .semantics {
+                    contentDescription = description
+                    if (error != null) error(error)
+                }
         )
     }
 
